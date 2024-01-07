@@ -1,5 +1,9 @@
 import yaml
 import base64
+import sys
+
+file_name = sys.argv[1]
+flag = sys.argv[2]
 
 def decode_value(encoded_dict):
     decoded_dict = {}
@@ -10,10 +14,19 @@ def decode_value(encoded_dict):
         decoded_dict[i] = decoded_string
     return decoded_dict
 
-with open('multiple_secret.yaml',mode='r') as original_file:
+def encoded_value(decoded_dict):
+    encoded_dict = {}
+    for (i,j) in decoded_dict.items():
+        print("j in dict ",j)
+        encoded_string = base64.b64encode(j.encode('utf-8')).decode('utf-8')
+        encoded_dict[i] = encoded_string
+    return encoded_dict
+
+with open(file_name,mode='r') as original_file:
     data1 = list(yaml.safe_load_all(original_file))
 
 print("\ndata1 ",data1)
+
 # data = {}
 # for i in data1:
 #     print("\ni in for loop ",i)
@@ -21,7 +34,7 @@ print("\ndata1 ",data1)
 #     print("\ndata  in for loop ",data)
 
 # print("\ndata ",data)
-final_decoded_dict = {}
+final_dict = {}
 final_list = []
 
 for data in data1:
@@ -30,9 +43,15 @@ for data in data1:
         if key == 'data':
            # print("\nkey is ",key)
            # print("\nvalue is ",value)
-            final_decoded_dict = decode_value(value)
-          #  print("\ndecoded_dict ",final_decoded_dict)
-            data[key] = final_decoded_dict
+            if flag == '-e':
+                final_dict = encoded_value(value)
+            elif flag == '-d':
+                final_dict = decode_value(value)
+            else:
+                print("enter correct flag")
+                exit()
+          #  print("\ndecoded_dict ",final_dict)
+            data[key] = final_dict
           #  print("\nfinal data ",data)
             final_list.append(data)
         else:
@@ -40,6 +59,6 @@ for data in data1:
 
 print("\nfinal list ",final_list)
 
-with open('decode-multiple-secret.yaml',mode='w') as decode_file:
+with open('sample-secret.yaml',mode='w') as decode_file:
     decode_file.write(yaml.safe_dump_all(final_list))
 
