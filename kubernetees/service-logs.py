@@ -12,8 +12,9 @@ config.load_kube_config()
 api_instance = client.CoreV1Api()
 
 find_error = False
+pod_state = ''
 
-def send_mail(podlist):
+def send_mail(podlist,pod_state):
       smtp_obj = smtplib.SMTP('smtp-mail.outlook.com',587)
       #smtp_obj = smtplib.SMTP('smtp.gmail.com',587)
       smtp_obj.ehlo()
@@ -25,7 +26,7 @@ def send_mail(podlist):
       msg['From'] = email
       msg['To'] = email
       msg['Subject'] = service_name + ' Logs'
-      body = service_name + ' logs are attached'
+      body = service_name + ' pod state is ' + pod_state
       msg.attach(MIMEText(body, 'plain'))
 
       ## ATTACHMENT PART OF THE CODE IS HERE
@@ -55,6 +56,7 @@ podlist = []
 for pod in pods.items:
    print(pod.metadata.name)
    podlist.append(pod.metadata.name)
+   print("\nstatus ",pod.status.phase)
    #print("in for")
 
 print("\n pod list ",podlist)
@@ -66,13 +68,20 @@ for pod in podlist:
    with open(pod+'.txt',mode='r') as f:
        lines = f.read()
    #print("\n pod of {} lines {}".format(pod,lines))
-   if lines.find('ERROR') != -1:
-       print("in if")
-       find_error = True
-       break
-   else:
-       print("in else")
+   for pod_status in pods.items:
+    if (lines.find('Use') != -1) and (pod_status.status.phase == 'Running'):
+        print("in if")
+        find_error = True
+        pod_state = pod_status.status.phase
+        break
+    elif (lines.find('Use') != -1) and ((pod_status.status.phase == 'CrashLoopBackOff') or (pod_status.status.phase == 'Error')):
+        print("in elif")
+        find_error = True
+        pod_state = pod_status.status.phase
+        break
+    else:
+        print("in else")
 
 if find_error == True:
-    send_mail(podlist)
+    send_mail(podlist,pod_state )
     print("\nEmail sent sussesfully")
