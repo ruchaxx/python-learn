@@ -46,8 +46,27 @@ def send_mail(podlist,pod_state):
 namespace = "k-test"
 service_name = sys.argv[1]
 
+ # Get the service by name
+# service = api_instance.read_namespaced_service(name=service_name, namespace=namespace)
+# print("\nservice ",service.spec.selector)
+
+# selector = ",".join([f"{key}={value}" for key, value in service.spec.selector.items()])
+# print("\nselector ",selector)
+
+############################
+
+# select_list = []
+# for key, value in service.spec.selector.items():
+#     select_list.append(key+'='+value)
+
+# print("select list ",select_list)
+
+# select = ''
+# select = ','.join(select_list)
+
+# print("select ",select)
 # Get the list of pods for the specified service
-pods = api_instance.list_namespaced_pod(namespace)
+pods = api_instance.list_namespaced_pod(namespace,label_selector='app.kubernetes.io/name='+service_name)
 
 podlist = []
 #print("\npods ",pods)
@@ -69,12 +88,12 @@ for pod in podlist:
        lines = f.read()
    #print("\n pod of {} lines {}".format(pod,lines))
    for pod_status in pods.items:
-    if (lines.find('Use') != -1) and (pod_status.status.phase == 'Running'):
+    if (lines.find('ERROR') != -1) and (pod_status.status.phase == 'Running'):
         print("in if")
         find_error = True
         pod_state = pod_status.status.phase
         break
-    elif (lines.find('Use') != -1) and ((pod_status.status.phase == 'CrashLoopBackOff') or (pod_status.status.phase == 'Error')):
+    elif (lines.find('ERROR') != -1) and ((pod_status.status.phase == 'CrashLoopBackOff') or (pod_status.status.phase == 'Error')):
         print("in elif")
         find_error = True
         pod_state = pod_status.status.phase
