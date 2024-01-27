@@ -1,6 +1,6 @@
 import sys
+import os
 from kubernetes import client, config
-from kubernetes.stream import stream
 import smtplib
 import getpass
 from email.mime.multipart import MIMEMultipart
@@ -81,27 +81,42 @@ for pod in pods.items:
 
 print("\n pod list ",podlist)
 # Retrieve pod logs
+
+
+def write_file(podlist):
+   for pod in podlist:
+        pod_logs = api_instance.read_namespaced_pod_log(name=pod, namespace=namespace,follow=True,_preload_content=False)
+        with open(pod+'.txt',mode='w') as f:
+            for line in pod_logs:
+                f.write(line.decode('utf-8'))
+
+def delete_file(podlist):
+    for pod in podlist:
+        if os.path.exists(pod+'.txt'):
+            os.remove(pod+'.txt')
+        else:
+            print("The file does not exist")
+
 for pod in podlist:
-   pod_logs = api_instance.read_namespaced_pod_log(name=pod, namespace=namespace)
-   with open(pod+'.txt',mode='w') as f:
-         f.write(pod_logs)
-   with open(pod+'.txt',mode='r') as f:
-       lines = f.read()
-   #print("\n pod of {} lines {}".format(pod,lines))
-   for pod_status in pods.items:
-    if (lines.find('ERROR') != -1) and (pod_status.status.phase == 'Running'):
-        print("in if")
-        find_error = True
-        pod_state = pod_status.status.phase
-        break
-    elif (lines.find('ERROR') != -1) and ((pod_status.status.phase == 'CrashLoopBackOff') or (pod_status.status.phase == 'Error')):
-        print("in elif")
-        find_error = True
-        pod_state = pod_status.status.phase
-        break
-    else:
-        print("in else")
+   pod_logs = api_instance.read_namespaced_pod_log(name=pod, namespace=namespace,follow=True,_preload_content=False)
+   for line in pod_logs:
+       for pod_status in pods.items:
+        if (line.decode('utf-8').find('Use') != -1) and (pod_status.status.phase == 'Running'):
+            print("in if")
+            find_error = True
+            pod_state = pod_status.status.phase
+            break
+        elif (line.decode('utf-8').find('Use') != -1) and ((pod_status.status.phase == 'CrashLoopBackOff') or (pod_status.status.phase == 'Error')):
+            print("in elif")
+            find_error = True
+            pod_state = pod_status.status.phase
+            break
+        else:
+            print("in else")
+   pod_logs.close()
 
 if find_error == True:
+    write_file(podlist)
     send_mail(podlist,pod_state )
+    delete_file(podlist)
     print("\nEmail sent sussesfully")
