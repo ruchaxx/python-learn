@@ -89,6 +89,7 @@ def write_file(podlist):
         with open(pod+'.txt',mode='w') as f:
             for line in pod_logs:
                 f.write(line.decode('utf-8'))
+            pod_logs.close()
 
 def delete_file(podlist):
     for pod in podlist:
@@ -101,12 +102,12 @@ for pod in podlist:
    pod_logs = api_instance.read_namespaced_pod_log(name=pod, namespace=namespace,follow=True,_preload_content=False)
    for line in pod_logs:
        for pod_status in pods.items:
-        if (line.decode('utf-8').find('Use') != -1) and (pod_status.status.phase == 'Running'):
+        if (line.decode('utf-8').find('Error') != -1) and (pod_status.status.phase == 'Running'):
             print("in if")
             find_error = True
             pod_state = pod_status.status.phase
             break
-        elif (line.decode('utf-8').find('Use') != -1) and ((pod_status.status.phase == 'CrashLoopBackOff') or (pod_status.status.phase == 'Error')):
+        elif (line.decode('utf-8').find('Error') != -1) and ((pod_status.status.phase == 'CrashLoopBackOff') or (pod_status.status.phase == 'Error')):
             print("in elif")
             find_error = True
             pod_state = pod_status.status.phase
