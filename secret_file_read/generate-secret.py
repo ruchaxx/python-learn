@@ -7,7 +7,8 @@ import sys
 l1 = []
 secret_list = []
 
-tenant = sys.argv[1]
+base_file = sys.argv[1]
+tenant = sys.argv[2]
 num = int(tenant) * 65
 
 
@@ -27,10 +28,10 @@ for i in secret_list:
     encoded_list.append(encoded_string)
 
 for i in encoded_list:
-   # print(i)
+    print(i)
     pass
 
-with open('base-file.yaml',mode='r') as f:
+with open(base_file,mode='r') as f:
     data = list(yaml.safe_load_all(f))
 
 #print(data[0])
@@ -45,11 +46,11 @@ for i in data:
                 except:
                      print("secrets are updated for ",tenant," tenants")
 
-            print("\nupdated \n",value)
-            print("\n")
+            # print("\nupdated \n",value)
+            # print("\n")
 
 
-with open("new-base.yaml",mode='w') as f:
+with open(base_file,mode='w') as f:
     f.write(yaml.safe_dump_all(data))
 
 
